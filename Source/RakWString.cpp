@@ -137,6 +137,7 @@ RakWString& RakWString::operator = ( char *str )
 	*this = ( const char * const) str;
 	return *this;
 }
+
 RakWString& RakWString::operator +=( const RakWString& right)
 {
 	if (right.IsEmpty())

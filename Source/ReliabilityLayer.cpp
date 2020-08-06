@@ -107,124 +107,127 @@ void BPSTracker::ClearExpired1(RakNet::TimeUS time)
 	}
 }
 
-struct DatagramHeaderFormat
+namespace RakNet
 {
+    struct DatagramHeaderFormat
+    {
 #if INCLUDE_TIMESTAMP_WITH_DATAGRAMS==1
-	CCTimeType sourceSystemTime;
+        CCTimeType sourceSystemTime;
 #endif
-	DatagramSequenceNumberType datagramNumber;
-
-	// Use floats to save bandwidth
-	//	float B; // Link capacity
-	float AS; // Data arrival rate
-	bool isACK;
-	bool isNAK;
-	bool isPacketPair;
-	bool hasBAndAS;
-	bool isContinuousSend;
-	bool needsBAndAs;
-	bool isValid; // To differentiate between what I serialized, and offline data
-
-	static BitSize_t GetDataHeaderBitLength()
-	{
-		return BYTES_TO_BITS(GetDataHeaderByteLength());
-	}
-
-	static unsigned int GetDataHeaderByteLength()
-	{
-		//return 2 + 3 + sizeof(RakNet::TimeMS) + sizeof(float)*2;
-		return 2 + 3 +
+        DatagramSequenceNumberType datagramNumber;
+        
+        // Use floats to save bandwidth
+        //    float B; // Link capacity
+        float AS; // Data arrival rate
+        bool isACK;
+        bool isNAK;
+        bool isPacketPair;
+        bool hasBAndAS;
+        bool isContinuousSend;
+        bool needsBAndAs;
+        bool isValid; // To differentiate between what I serialized, and offline data
+        
+        static BitSize_t GetDataHeaderBitLength()
+        {
+            return BYTES_TO_BITS(GetDataHeaderByteLength());
+        }
+        
+        static unsigned int GetDataHeaderByteLength()
+        {
+            //return 2 + 3 + sizeof(RakNet::TimeMS) + sizeof(float)*2;
+            return 2 + 3 +
 #if INCLUDE_TIMESTAMP_WITH_DATAGRAMS==1
-			sizeof(RakNetTimeMS) +
+            sizeof(RakNetTimeMS) +
 #endif
-			sizeof(float)*1;
-	}
-
-	void Serialize(RakNet::BitStream *b)
-	{
-		// Not endian safe
-		//		RakAssert(GetDataHeaderByteLength()==sizeof(DatagramHeaderFormat));
-		//		b->WriteAlignedBytes((const unsigned char*) this, sizeof(DatagramHeaderFormat));
-		//		return;
-
-		b->Write(true); // IsValid
-		if (isACK)
-		{
-			b->Write(true);
-			b->Write(hasBAndAS);
-			b->AlignWriteToByteBoundary();
+            sizeof(float)*1;
+        }
+        
+        void Serialize(RakNet::BitStream *b)
+        {
+            // Not endian safe
+            //        RakAssert(GetDataHeaderByteLength()==sizeof(DatagramHeaderFormat));
+            //        b->WriteAlignedBytes((const unsigned char*) this, sizeof(DatagramHeaderFormat));
+            //        return;
+            
+            b->Write(true); // IsValid
+            if (isACK)
+            {
+                b->Write(true);
+                b->Write(hasBAndAS);
+                b->AlignWriteToByteBoundary();
 #if INCLUDE_TIMESTAMP_WITH_DATAGRAMS==1
-			RakNet::TimeMS timeMSLow=(RakNet::TimeMS) sourceSystemTime&0xFFFFFFFF; b->Write(timeMSLow);
+                RakNet::TimeMS timeMSLow=(RakNet::TimeMS) sourceSystemTime&0xFFFFFFFF; b->Write(timeMSLow);
 #endif
-			if (hasBAndAS)
-			{
-				//		b->Write(B);
-				b->Write(AS);
-			}
-		}
-		else if (isNAK)
-		{
-			b->Write(false);
-			b->Write(true);
-		}
-		else
-		{
-			b->Write(false);
-			b->Write(false);
-			b->Write(isPacketPair);
-			b->Write(isContinuousSend);
-			b->Write(needsBAndAs);
-			b->AlignWriteToByteBoundary();
+                if (hasBAndAS)
+                {
+                    //        b->Write(B);
+                    b->Write(AS);
+                }
+            }
+            else if (isNAK)
+            {
+                b->Write(false);
+                b->Write(true);
+            }
+            else
+            {
+                b->Write(false);
+                b->Write(false);
+                b->Write(isPacketPair);
+                b->Write(isContinuousSend);
+                b->Write(needsBAndAs);
+                b->AlignWriteToByteBoundary();
 #if INCLUDE_TIMESTAMP_WITH_DATAGRAMS==1
-			RakNet::TimeMS timeMSLow=(RakNet::TimeMS) sourceSystemTime&0xFFFFFFFF; b->Write(timeMSLow);
+                RakNet::TimeMS timeMSLow=(RakNet::TimeMS) sourceSystemTime&0xFFFFFFFF; b->Write(timeMSLow);
 #endif
-			b->Write(datagramNumber);
-		}
-	}
-	void Deserialize(RakNet::BitStream *b)
-	{
-		// Not endian safe
-		//		b->ReadAlignedBytes((unsigned char*) this, sizeof(DatagramHeaderFormat));
-		//		return;
-
-		b->Read(isValid);
-		b->Read(isACK);
-		if (isACK)
-		{
-			isNAK=false;
-			isPacketPair=false;
-			b->Read(hasBAndAS);
-			b->AlignReadToByteBoundary();
+                b->Write(datagramNumber);
+            }
+        }
+        void Deserialize(RakNet::BitStream *b)
+        {
+            // Not endian safe
+            //        b->ReadAlignedBytes((unsigned char*) this, sizeof(DatagramHeaderFormat));
+            //        return;
+            
+            b->Read(isValid);
+            b->Read(isACK);
+            if (isACK)
+            {
+                isNAK=false;
+                isPacketPair=false;
+                b->Read(hasBAndAS);
+                b->AlignReadToByteBoundary();
 #if INCLUDE_TIMESTAMP_WITH_DATAGRAMS==1
-			RakNet::TimeMS timeMS; b->Read(timeMS); sourceSystemTime=(CCTimeType) timeMS;
+                RakNet::TimeMS timeMS; b->Read(timeMS); sourceSystemTime=(CCTimeType) timeMS;
 #endif
-			if (hasBAndAS)
-			{
-				//			b->Read(B);
-				b->Read(AS);
-			}
-		}
-		else
-		{
-			b->Read(isNAK);
-			if (isNAK)
-			{
-				isPacketPair=false;
-			}
-			else
-			{
-				b->Read(isPacketPair);
-				b->Read(isContinuousSend);
-				b->Read(needsBAndAs);
-				b->AlignReadToByteBoundary();
+                if (hasBAndAS)
+                {
+                    //            b->Read(B);
+                    b->Read(AS);
+                }
+            }
+            else
+            {
+                b->Read(isNAK);
+                if (isNAK)
+                {
+                    isPacketPair=false;
+                }
+                else
+                {
+                    b->Read(isPacketPair);
+                    b->Read(isContinuousSend);
+                    b->Read(needsBAndAs);
+                    b->AlignReadToByteBoundary();
 #if INCLUDE_TIMESTAMP_WITH_DATAGRAMS==1
-				RakNet::TimeMS timeMS; b->Read(timeMS); sourceSystemTime=(CCTimeType) timeMS;
+                    RakNet::TimeMS timeMS; b->Read(timeMS); sourceSystemTime=(CCTimeType) timeMS;
 #endif
-				b->Read(datagramNumber);
-			}
-		}
-	}
-};
+                    b->Read(datagramNumber);
+                }
+            }
+        }
+    };
+}
 
 #if  !defined(__GNUC__) && !defined(__ARMCC)
 #pragma warning(disable:4702)   // unreachable code
@@ -297,8 +300,6 @@ if (key == data->splitPacketIndex)
 return 0;
 return 1;
 }
-
-
 
 //-------------------------------------------------------------------------------------------------------
 // Constructor
@@ -766,7 +767,6 @@ bool ReliabilityLayer::HandleSocketReceiveFromConnectedPlayer(
 							ackReceipt->data[0]=(MessageID)ID_SND_RECEIPT_ACKED;
 							memcpy(ackReceipt->data+sizeof(MessageID), &unreliableWithAckReceiptHistory[k].sendReceiptSerial, sizeof(uint32_t));
 							outputQueue.Push(ackReceipt, _FILE_AND_LINE_ );
-
 							// Remove, swap with last
 							unreliableWithAckReceiptHistory.RemoveAtIndex(k);
 						}
@@ -2247,7 +2247,6 @@ void ReliabilityLayer::Update( RakNetSocket2 *s, SystemAddress &systemAddress, i
 	//DeleteOldUnreliableSplitPackets( time );
 }
 
-
 //-------------------------------------------------------------------------------------------------------
 // Writes a bitstream to the socket
 //-------------------------------------------------------------------------------------------------------
@@ -3233,8 +3232,6 @@ InternalPacket * ReliabilityLayer::BuildPacketFromSplitPacketList( SplitPacketCh
 	return internalPacket;
 #endif
 }
-
-
 //-------------------------------------------------------------------------------------------------------
 InternalPacket * ReliabilityLayer::BuildPacketFromSplitPacketList( SplitPacketIdType splitPacketId, CCTimeType time,
 																  RakNetSocket2 *s, SystemAddress &systemAddress, RakNetRandom *rnr, 

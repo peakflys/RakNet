@@ -1045,6 +1045,7 @@ ConnectionAttemptResult RakPeer::ConnectWithSocket(const char* host, unsigned sh
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void RakPeer::Shutdown( unsigned int blockDuration, unsigned char orderingChannel, PacketPriority disconnectionNotificationPriority )
 {
+	//LOG("RakPeer Shutdown!!!");
 	unsigned i,j;
 	bool anyActive;
 	RakNet::TimeMS startWaitingTime;
@@ -1538,10 +1539,13 @@ Packet* RakPeer::Receive( void )
 	{
 		pluginListNTS[i]->Update();
 	}
-
+	
 	do
 	{
 		packetReturnMutex.Lock();
+		//static int loopCount = 0;
+		//if (++ loopCount % 100 == 0)
+		//	LOG("Receive here! packetReturnQueue size: " << packetReturnQueue.Size());
 		if (packetReturnQueue.IsEmpty())
 			packet=0;
 		else
@@ -1549,7 +1553,7 @@ Packet* RakPeer::Receive( void )
 		packetReturnMutex.Unlock();
 		if (packet==0)
 			return 0;
-
+		//LOG("Receive has packet! packet cmd: " << int(packet->data[0]));
 //		unsigned char msgId;
 		if ( ( packet->length >= sizeof(unsigned char) + sizeof( RakNet::Time ) ) &&
 			( (unsigned char) packet->data[ 0 ] == ID_TIMESTAMP ) )
@@ -2845,7 +2849,7 @@ void RakPeer::PushBackPacket( Packet *packet, bool pushAtHead)
 {
 	if (packet==0)
 		return;
-
+	//LOG("PushBackPacket packet cmd: " << int(packet->data[0]))
 	unsigned i;
 	for (i=0; i < pluginListTS.Size(); i++)
 		pluginListTS[i]->OnPushBackPacket((const char*) packet->data, packet->bitSize, packet->systemAddress);
@@ -4473,6 +4477,7 @@ inline void RakPeer::AddPacketToProducer(RakNet::Packet *p)
 {
 	packetReturnMutex.Lock();
 	packetReturnQueue.Push(p,_FILE_AND_LINE_);
+	//LOG("AddPacketToProducer packet cmd: " << int(p->data[0]) << " now packetReturnQueue size: " << packetReturnQueue.Size());
 	packetReturnMutex.Unlock();
 }
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5462,6 +5467,7 @@ void ProcessNetworkPacket( SystemAddress systemAddress, const char *data, const 
 }
 void ProcessNetworkPacket( SystemAddress systemAddress, const char *data, const int length, RakPeer *rakPeer, RakNetSocket2* rakNetSocket, RakNet::TimeUS timeRead, BitStream &updateBitStream )
 {
+	//LOG("ProcessNetworkPacket length: " << length << " address port: "<<systemAddress.GetPort());
 #if LIBCAT_SECURITY==1
 #ifdef CAT_AUDIT
 	printf("AUDIT: RECV ");
@@ -5754,6 +5760,7 @@ bool RakPeer::RunUpdateCycle(BitStream &updateBitStream )
 
 					if (condition1 && !condition2 && rcs->actionToTake==RequestedConnectionStruct::CONNECT)
 					{
+						//LOG("loop requestedConnectionQueue connection timeout");
 						// Tell user of connection attempt failed
 						packet=AllocPacket(sizeof( char ), _FILE_AND_LINE_);
 						packet->data[ 0 ] = ID_CONNECTION_ATTEMPT_FAILED; // Attempted a connection and couldn't
@@ -5781,7 +5788,7 @@ bool RakPeer::RunUpdateCycle(BitStream &updateBitStream )
 				}
 				else
 				{
-
+					//LOG("loop requestedConnectionQueue connect again! now count: " << (int)rcs->requestsMade);
 					int MTUSizeIndex = rcs->requestsMade / (rcs->sendConnectionAttemptCount/NUM_MTU_SIZES);
 					if (MTUSizeIndex>=NUM_MTU_SIZES)
 						MTUSizeIndex=NUM_MTU_SIZES-1;
@@ -6365,7 +6372,7 @@ RAK_THREAD_DECLARATION(RakNet::RecvFromLoop)
 RAK_THREAD_DECLARATION(RakNet::UpdateNetworkLoop)
 {
 
-
+	//LOG("UpdateNetworkLoop Start!!!");
 
 	RakPeer * rakPeer = ( RakPeer * ) arguments;
 
@@ -6464,7 +6471,7 @@ RAK_THREAD_DECLARATION(RakNet::UpdateNetworkLoop)
 #endif
 	*/
 
-
+	//LOG("UpdateNetworkLoop End!!!");
 
 
 	return 0;
@@ -6530,7 +6537,7 @@ void RakPeer::FillIPList(void)
 
 	// Fill out ipList structure
 #if  !defined(WINDOWS_STORE_RT)
-	RakNetSocket2::GetMyIP( ipList );
+	//RakNetSocket2::GetMyIP( ipList );
 #endif
 
 	// Sort the addresses from lowest to highest

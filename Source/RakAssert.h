@@ -8,5 +8,5 @@
  *
  */
 
-#include <cassert>
+#include <assert.h>
 #include "RakNetDefines.h"

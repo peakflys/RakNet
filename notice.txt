@@ -1,0 +1,43 @@
+一、最终结果：
+    1、源文件在Source目录，增加了ClientConnections.cpp、ClientConnections.h、ClientConnectionsWrap.cpp三个文件，修改了若干文件
+    2、windows编译工程仍在DependentExtensions\Swig\DLL_Swig目录下
+    3、安卓使用的so编译通过ndk
+         工程拷贝到 E:\datas\Android\samples\RakNet\jni\RakNetSources
+         建立合适的Android.mk和Application.mk，通过自定义的build.bat来执行编译
+
+二、中途遇到的问题
+	E:\RakNet-master\DependentExtensions\Swig\下手动建两个目录
+	SwigOutput\CplusDLLIncludes
+	SwigOutput\SwigCSharpOutput
+
+	编译dll时提示 系统找不到指定的路径
+	建立目录 E:\RakNet-master\DependentExtensions\Swig\SwigWindowsCSharpSample\SwigTestApp\SwigFiles
+
+	E:\RakNet-master\Source\CCRakNetSlidingWindow.cpp  abs重载未定义
+		deviationRtt = deviationRtt + d * (abs(long(difference)) - deviationRtt);
+
+	[失败] 未能找到文件“E:\RakNet-master\DependentExtensions\Swig\SwigWindowsCSharpSample\SwigTestApp\SwigFiles\SWIGTYPE_p_RakNet__TM_World__JoinRequestHelper.cs”。
+	E:\RakNet-master\DependentExtensions\Swig\InternalSwigItems\InternalSwigWindowsCSharpSample\InternalSwigTestApp\SwigFiles里拷贝
+
+	单独建unity测试工程，修改错误
+
+	X86改为X64
+	工程里添加wrap文件
+	修改拷贝构造的错误、operator+错误等，rem注释掉preBuild脚本
+
+	Linux编译:
+	Go to your RakNet folder and use
+	ccmake .
+	Press c to configure.
+	Use the following values for the keys that appear:
+	CMAKE_BUILD_TYPE = Release
+	RAKNET_ENABLE_DLL = ON
+	RAKNET_ENABLE_SAMPLES = OFF
+	RAKNET_ENABLE_STATIC = ON
+	RAKNET_GENERATE_INCLUDE_ONLY_DIR = ON
+	Press c to configure it again.
+	Then use:
+	make
+
+	Andorid编译:
+	去除 FileList的安卓编译 #include <asm/io.h>

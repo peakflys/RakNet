@@ -50,6 +50,11 @@ enum OutOfBandIdentifiers
 /// \note All these enumerations should be casted to (unsigned char) before writing them to RakNet::BitStream
 enum DefaultMessageIDTypes
 {
+	//add by jefftian
+	// Receive Package too large
+	ID_MESSAGEID_OVERFLOW_RECV_BUFF = -2,
+	// Mark as NULL happend
+	ID_MESSAGEID_NULL = -1,
 	//
 	// RESERVED TYPES - DO NOT CHANGE THESE
 	// All types from RakPeer

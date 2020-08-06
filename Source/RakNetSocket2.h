@@ -418,8 +418,6 @@ protected:
 
 
 
-
-
 #if   defined(_WIN32)
 
 class RNS2_Windows : public RNS2_Berkley, public RNS2_Windows_Linux_360
